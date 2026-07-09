@@ -62,6 +62,12 @@ class Settings(BaseSettings):
     XAI_API_KEY: Optional[str] = Field(default=None, env="XAI_API_KEY")
     OPENROUTER_API_KEY: Optional[str] = Field(default=None, env="OPENROUTER_API_KEY")
 
+    # x402 Payment Configuration
+    X402_ENABLED: bool = Field(default=True, env="X402_ENABLED")
+    WALLET_ADDRESS: Optional[str] = Field(default=None, env="WALLET_ADDRESS")
+    X402_FACILITATOR_URL: str = Field(default="https://x402.org/facilitator", env="X402_FACILITATOR_URL")
+    X402_NETWORK: str = Field(default="eip155:84532", env="X402_NETWORK")  # Base Sepolia testnet
+
     @model_validator(mode="after")
     def assemble_db_connection(self) -> "Settings":
         if not self.DATABASE_URL:

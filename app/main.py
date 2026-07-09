@@ -92,3 +92,55 @@ app.include_router(dashboard_router, prefix="/v1/dashboard", tags=["Dashboard De
 
 # 3. Administration REST APIs under /v1/admin prefix
 app.include_router(admin_router, prefix="/v1/admin", tags=["Gateway Administration API"])
+
+# 4. x402 Payment-Gated Routes (conditionally loaded)
+_x402_active = False
+if settings.X402_ENABLED and settings.WALLET_ADDRESS:
+    try:
+        from app.x402.setup import build_x402_middleware_config
+        from app.x402.routes import router as x402_router
+
+        x402_config = build_x402_middleware_config()
+        if x402_config is not None:
+            routes, x402_server = x402_config
+
+            # Include x402 routes at /x402/v1 prefix
+            app.include_router(x402_router, prefix="/x402/v1", tags=["x402 Payment Gateway"])
+
+            # Add x402 PaymentMiddlewareASGI
+            from x402.http.middleware.fastapi import PaymentMiddlewareASGI
+            app.add_middleware(PaymentMiddlewareASGI, routes=routes, server=x402_server)
+
+            _x402_active = True
+            logger.info("x402 payment gateway enabled at /x402/v1/*")
+
+    except Exception as e:
+        logger.error(f"Failed to initialize x402 payment gateway: {e}")
+elif settings.X402_ENABLED and not settings.WALLET_ADDRESS:
+    logger.warning("x402 is enabled but WALLET_ADDRESS is not set — payment routes disabled")
+
+
+# .well-known discovery endpoint for x402
+@app.get("/.well-known/x402.json", tags=["x402 Discovery"])
+async def x402_discovery():
+    """x402 protocol discovery endpoint. Returns payment configuration metadata."""
+    if not _x402_active:
+        return {
+            "x402": False,
+            "message": "x402 payment gateway is not enabled on this instance.",
+        }
+
+    return {
+        "x402": True,
+        "version": 2,
+        "facilitator": settings.X402_FACILITATOR_URL,
+        "network": settings.X402_NETWORK,
+        "wallet": settings.WALLET_ADDRESS,
+        "endpoints": {
+            "chat_completions": "/x402/v1/chat/completions",
+            "embeddings": "/x402/v1/embeddings",
+            "models": "/x402/v1/models",
+        },
+        "docs": "https://github.com/jonahthan433/CortexCloudAPI",
+    }
+
