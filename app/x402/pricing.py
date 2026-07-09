@@ -1,34 +1,42 @@
 """
 Centralized pricing configuration for x402 payment-gated routes.
 
-Prices are in USD strings (per x402 convention: "$0.005" = half a cent).
-The x402 SDK converts these to USDC atomic units automatically.
+Prices are in USD strings (e.g. "$0.005" = 0.5¢ per request).
+These are converted to USDC atomic units (6 decimals on Base) for the x402 challenge.
 """
 
-# Default per-request prices by route
+# Default per-request prices by route (only for the /x402/v1 prefix)
 ROUTE_PRICING: dict[str, str] = {
-    "POST /x402/v1/chat/completions": "$0.005",  # 0.5¢ per completion call
-    "POST /x402/v1/responses": "$0.005",          # alias for completions
-    "POST /x402/v1/embeddings": "$0.001",         # 0.1¢ per embedding call
-    "GET /x402/v1/models": "$0.00",               # free — model discovery
+    # Chat completions
+    "POST /x402/v1/chat/completions": "$0.005",
+    "POST /x402/v1/responses": "$0.005",
+    
+    # Embeddings
+    "POST /x402/v1/embeddings": "$0.001",
+    
+    # Models (Free)
+    "GET /x402/v1/models": "$0.00",
 }
 
-# Model-specific price overrides (keyed by model name prefix).
-# When a specific model is requested, the gateway could apply these
-# overrides. For now, the x402 middleware charges the flat route price
-# above — model-tier pricing would require the "upto" scheme.
-MODEL_PRICE_TIERS: dict[str, str] = {
-    "gemini": "$0.002",
-    "groq": "$0.002",
-    "openrouter": "$0.008",
-    "gpt-4": "$0.01",
-    "claude": "$0.01",
-}
-
-# Route descriptions for Bazaar discovery metadata
+# Route descriptions for x402 challenge
 ROUTE_DESCRIPTIONS: dict[str, str] = {
-    "POST /x402/v1/chat/completions": "OpenAI-compatible chat completions via CortexCloud AI gateway. Supports Gemini, Groq, OpenRouter, and more.",
+    "POST /x402/v1/chat/completions": "OpenAI-compatible chat completions via CortexCloud AI gateway.",
     "POST /x402/v1/responses": "OpenAI-compatible chat completions (alias) via CortexCloud AI gateway.",
     "POST /x402/v1/embeddings": "OpenAI-compatible text embeddings via CortexCloud AI gateway.",
-    "GET /x402/v1/models": "List available AI models on the CortexCloud gateway.",
 }
+
+
+def usd_to_usdc_atomic(price_str: str) -> str:
+    """
+    Converts a USD price string to USDC atomic units (string representing integer).
+    USDC on Base has 6 decimals.
+    Example: "$0.005" -> "5000"
+             "$0.001" -> "1000"
+    """
+    val = price_str.lstrip('$')
+    try:
+        amount = float(val)
+        atomic = int(amount * 1_000_000)
+        return str(atomic)
+    except ValueError:
+        return "0"

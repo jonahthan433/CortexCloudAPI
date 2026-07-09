@@ -97,27 +97,23 @@ app.include_router(admin_router, prefix="/v1/admin", tags=["Gateway Administrati
 _x402_active = False
 if settings.X402_ENABLED and settings.WALLET_ADDRESS:
     try:
-        from app.x402.setup import build_x402_middleware_config
         from app.x402.routes import router as x402_router
+        from app.middleware.x402 import X402PaymentMiddleware
 
-        x402_config = build_x402_middleware_config()
-        if x402_config is not None:
-            routes, x402_server = x402_config
+        # Include x402 routes at /x402/v1 prefix
+        app.include_router(x402_router, prefix="/x402/v1", tags=["x402 Payment Gateway"])
 
-            # Include x402 routes at /x402/v1 prefix
-            app.include_router(x402_router, prefix="/x402/v1", tags=["x402 Payment Gateway"])
+        # Add custom x402 Payment Middleware
+        app.add_middleware(X402PaymentMiddleware)
 
-            # Add x402 PaymentMiddlewareASGI
-            from x402.http.middleware.fastapi import PaymentMiddlewareASGI
-            app.add_middleware(PaymentMiddlewareASGI, routes=routes, server=x402_server)
-
-            _x402_active = True
-            logger.info("x402 payment gateway enabled at /x402/v1/*")
+        _x402_active = True
+        logger.info("x402 payment gateway middleware and router enabled")
 
     except Exception as e:
         logger.error(f"Failed to initialize x402 payment gateway: {e}")
 elif settings.X402_ENABLED and not settings.WALLET_ADDRESS:
     logger.warning("x402 is enabled but WALLET_ADDRESS is not set — payment routes disabled")
+
 
 
 # .well-known discovery endpoint for x402

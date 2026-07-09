@@ -65,8 +65,8 @@ class Settings(BaseSettings):
     # x402 Payment Configuration
     X402_ENABLED: bool = Field(default=True, env="X402_ENABLED")
     WALLET_ADDRESS: Optional[str] = Field(default=None, env="WALLET_ADDRESS")
-    X402_FACILITATOR_URL: str = Field(default="https://x402.org/facilitator", env="X402_FACILITATOR_URL")
-    X402_NETWORK: str = Field(default="eip155:84532", env="X402_NETWORK")  # Base Sepolia testnet
+    X402_FACILITATOR_URL: str = Field(default="https://api.cdp.coinbase.com/platform/v2/x402", env="X402_FACILITATOR_URL")
+    X402_NETWORK: str = Field(default="base", env="X402_NETWORK")
 
     @model_validator(mode="after")
     def assemble_db_connection(self) -> "Settings":
