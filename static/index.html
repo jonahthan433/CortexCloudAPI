@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CortexCloud — The payment rail for AI agents</title>
+<link rel="icon" href="/favicon.ico" />
+<meta property="og:title" content="CortexCloud — The payment rail for AI agents" />
+<meta property="og:description" content="Chat, image, data, and on-chain tools — one endpoint, payment built in, settled in USDC on Base via x402. No API keys." />
+<meta property="og:image" content="https://api.cortexcloud.org/favicon.ico" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+  :root{
+    --bg:#050608; --panel:#0c0f17; --panel2:#11151f; --line:#1c2230;
+    --txt:#e7eaf2; --muted:#8a93a8; --cyan:#22d3ee; --purple:#a855f7; --green:#34d399; --blue:#3b82f6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(1100px 700px at 82% -8%, rgba(168,85,247,.16), transparent 58%),
+              radial-gradient(900px 600px at 0% 0%, rgba(34,211,238,.14), transparent 52%), var(--bg);
+    color:var(--txt); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(5,6,8,.72);
+    border-bottom:1px solid var(--line)}
+  .navin{max-width:1140px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:17px}
+  .brand img{width:32px;height:32px;border-radius:8px}
+  .navlinks{display:flex;gap:22px;color:var(--muted);font-size:14px}
+  .navlinks a:hover{color:var(--txt)}
+  .navcta{background:linear-gradient(90deg,var(--cyan),var(--purple));color:#04121d;padding:9px 16px;border-radius:10px;font-weight:700;font-size:14px}
+  .xlink{color:var(--muted);font-size:13px}
+  /* hero */
+  .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;padding:56px 0 30px}
+  .tag{text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-size:12px}
+  h1{font-size:52px;line-height:1.04;font-weight:800;margin:14px 0 0;
+    background:linear-gradient(90deg,#fff 28%,#cfe9ff 60%,#e9d5ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{color:var(--muted);font-size:17px;line-height:1.6;margin:18px 0 0;max-width:520px}
+  .lede b{color:var(--txt)}
+  .btns{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:12px;font-weight:700;font-size:15px}
+  .btn.primary{background:linear-gradient(90deg,var(--cyan),var(--purple));color:#04121d}
+  .btn.ghost{border:1px solid var(--line);color:var(--txt);background:var(--panel)}
+  /* live card */
+  .live{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;min-height:420px}
+  .live-head{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(52,211,153,.18);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
+  .big{font-size:38px;font-weight:800;margin:12px 0 2px;font-variant-numeric:tabular-nums}
+  .big small{font-size:13px;color:var(--muted);font-weight:600;margin-left:8px}
+  .sub{color:var(--muted);font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-top:14px}
+  th{text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;padding:7px 6px;border-bottom:1px solid var(--line)}
+  td{padding:9px 6px;border-bottom:1px solid rgba(28,34,48,.6);font-size:13px;font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  .mdot{display:inline-block;width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple));margin-right:8px;vertical-align:middle}
+  .amt{color:var(--green);font-weight:600}
+  .age{color:var(--muted)}
+  .mini{display:inline-block;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--purple));vertical-align:middle;margin-left:6px}
+  .strip{display:flex;gap:10px;margin-top:14px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+  .strip a{color:var(--cyan)}
+  /* compat strip */
+  .compat{margin:34px 0 10px}
+  .compat .lbl{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.16em;text-align:center;margin-bottom:16px}
+  .logos{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .logo{display:flex;flex-direction:column;gap:3px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 16px;min-width:150px}
+  .logo .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+  .logo .v{font-weight:700;font-size:14px}
+  .logo.coinbase{background:linear-gradient(90deg,rgba(34,211,238,.12),rgba(168,85,247,.12))}
+  /* terminal demo */
+  .demo{margin:60px 0 0}
+  .demo h2{font-size:30px;font-weight:800;text-align:center;margin:0 0 6px}
+  .demo p.lede{text-align:center;max-width:620px;margin:0 auto}
+  .term{background:#07090f;border:1px solid var(--line);border-radius:14px;margin:24px auto 0;max-width:760px;overflow:hidden}
+  .term .bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}
+  .term .copy{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer}
+  .term pre{margin:0;padding:16px;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#cfe9ff;white-space:pre-wrap;line-height:1.6}
+  .demo .meta{display:flex;gap:14px;justify-content:center;margin-top:14px;color:var(--muted);font-size:12px}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-top:18px}
+  .tab{padding:8px 16px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
+  .tab.on{color:var(--txt);border-color:var(--cyan)}
+  /* sections */
+  section.block{margin:64px 0 0}
+  .seclbl{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.16em;margin-bottom:10px}
+  h2.sec{font-size:34px;font-weight:800;margin:0 0 8px}
+  h2.sec .g{background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .grid{display:grid;gap:14px;margin-top:22px}
+  .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card .top{display:flex;align-items:center;justify-content:space-between}
+  .card .tag2{font-size:10px;color:var(--cyan);text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+  .card .live2{font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:.1em}
+  .card h3{margin:10px 0 4px;font-size:16px}
+  .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+  .card .price{margin-top:10px;color:var(--green);font-weight:700;font-size:14px}
+  /* model table */
+  .mtable{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}
+  .mtable th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:10px;border-bottom:1px solid var(--line)}
+  .mtable td{padding:11px 10px;border-bottom:1px solid rgba(28,34,48,.5)}
+  .mtable tr:hover td{background:rgba(255,255,255,.02)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .free{color:var(--green);font-weight:700;font-size:13px}
+  /* enterprise */
+  .ent{background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(168,85,247,.08));border:1px solid var(--line);border-radius:18px;padding:34px;margin-top:64px;text-align:center}
+  .ent h2{font-size:30px;font-weight:800;margin:0 0 8px}
+  .ent p{color:var(--muted);max-width:560px;margin:0 auto 18px}
+  .ent .row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  footer{margin:60px 0 40px;color:var(--muted);font-size:13px;text-align:center;border-top:1px solid var(--line);padding-top:26px}
+  .docs{color:var(--cyan);font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  @media(max-width:860px){.hero{grid-template-columns:1fr}.g3,.g2{grid-template-columns:1fr}h1{font-size:38px}.navlinks{display:none}}
+</style>
+</head>
+<body>
+<nav><div class="navin">
+  <div class="brand"><img src="/favicon.ico" alt="CortexCloud"/>CortexCloud</div>
+  <div class="navlinks">
+    <a href="#models">Models</a><a href="#data">Data &amp; On-chain</a>
+    <a href="#mcp">MCP</a><a href="#docs">Docs</a>
+  </div>
+  <a class="xlink" href="https://x.com/CortexCloud">Follow @CortexCloud</a>
+  <a class="navcta" href="#get">GET STARTED</a>
+</div></nav>
+
+<div class="wrap">
+  <!-- HERO -->
+  <div class="hero" id="get">
+    <div>
+      <div class="tag">Per call. Per token. No subscription.</div>
+      <h1>The payment rail for <span style="background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent">AI agents</span>.</h1>
+      <p class="lede">Chat, image, data, and on-chain tools — one endpoint, payment built in, <b>settled in USDC on Base via x402</b>. No API keys.</p>
+      <div class="btns">
+        <a class="btn primary" href="#mcp">Get your agent on CortexCloud →</a>
+        <a class="btn ghost" href="/docs">Read the docs</a>
+      </div>
+    </div>
+    <div class="live">
+      <div class="live-head"><span class="dot"></span> LIVE / TRANSACTIONS — ON-CHAIN, BASE</div>
+      <div class="big" id="txcount">—<small>transactions settled</small></div>
+      <div class="sub" id="volume">Total volume settled: — USDC</div>
+      <table>
+        <thead><tr><th>MODEL</th><th>TOKENS</th><th>AMOUNT</th><th>AGE</th></tr></thead>
+        <tbody id="feed"><tr><td colspan="4" style="color:var(--muted)">Loading live activity…</td></tr></tbody>
+      </table>
+      <div class="strip"><span>23 MODELS · 6 DATA &amp; ON-CHAIN APIS</span><a href="https://basescan.org/address/0xE816eA741a0084748DC9f2BEeB86Be6705862365" target="_blank">VERIFY ON BASESCAN ↗</a></div>
+    </div>
+  </div>
+
+  <!-- COMPAT -->
+  <div class="compat">
+    <div class="lbl">Compatible with — one gateway, every agent harness</div>
+    <div class="logos">
+      <div class="logo coinbase"><span class="k">Settlement</span><span class="v">Coinbase x402</span></div>
+      <div class="logo"><span class="k">Claude Code · Codex</span><span class="v">CortexCloud MCP</span></div>
+      <div class="logo"><span class="k">Our native agent</span><span class="v">Cortex Agent</span></div>
+      <div class="logo"><span class="k">Any x402 client</span><span class="v">OpenAI-compatible</span></div>
+    </div>
+  </div>
+
+  <!-- TERMINAL DEMO -->
+  <div class="demo" id="mcp">
+    <h2>Watch an agent pay its way.</h2>
+    <p class="lede">A Claude Code session with CortexCloud MCP installed — real tool names, real model IDs, real prices. The agent asks, the call settles in USDC, the receipt is on-chain.</p>
+    <div class="term">
+      <div class="bar"><span class="mono">claude code · cortexcloud mcp</span><button class="copy" onclick="copyInstall()">Copy</button></div>
+      <pre id="install">npx -y @cortexcloud.org/mcp</pre>
+    </div>
+    <div class="meta"><span class="mono">x402 · usdc</span><a class="navcta" style="padding:7px 14px;font-size:13px" href="/docs">CLAUDE CODE SETUP →</a></div>
+    <div class="tabs">
+      <div class="tab on" onclick="setTab(this,'chat')">CHAT</div>
+      <div class="tab" onclick="setTab(this,'data')">DATA</div>
+      <div class="tab" onclick="setTab(this,'onchain')">ON-CHAIN</div>
+    </div>
+    <div class="term" id="demopanel">
+      <div class="bar"><span class="mono" id="demotitle">cortexcloud_chat · x402</span></div>
+      <pre id="demobody">▍ User: summarize the latest Base DEX activity
+▍ Agent → cortexcloud_chat (gpt-4o)
+▍ x402 challenge → pay 0.002 USDC
+▍ wallet signs · settles on Base
+▍ 200 OK · "Base DEX volume up 12% WoW…"</pre>
+    </div>
+  </div>
+
+  <!-- MODELS -->
+  <section class="block" id="models">
+    <div class="seclbl">AI Model Gateway</div>
+    <h2 class="sec">23 models. <span class="g">One endpoint.</span></h2>
+    <p class="lede" style="max-width:640px">Chat, embeddings, image, video, music and voice — one OpenAI-compatible API. Provider cost + 5% margin at settlement. No subscriptions, no minimum spend, no vendor lock-in.</p>
+    <a class="free" href="/docs" style="display:inline-block;margin-top:12px">FREE — Try without paying · no card, no signup</a>
+    <table class="mtable" id="mtable">
+      <thead><tr><th>MODEL</th><th>PROVIDER</th><th>IN / OUT · 1M</th></tr></thead>
+      <tbody id="mrows"><tr><td colspan="3" style="color:var(--muted)">Loading models…</td></tr></tbody>
+    </table>
+    <div class="grid g3" id="modgrid" style="margin-top:18px"></div>
+  </section>
+
+  <!-- DATA & ON-CHAIN -->
+  <section class="block" id="data">
+    <div class="seclbl">Data &amp; On-chain</div>
+    <h2 class="sec">AI buys data &amp; <span class="g">on-chain.</span></h2>
+    <p class="lede" style="max-width:640px">Any API. Any agent. Pay per request with USDC via x402 — no keys, no subscriptions, no accounts.</p>
+    <div class="grid g2" id="datagrid"></div>
+  </section>
+
+  <!-- ENTERPRISE -->
+  <div class="ent">
+    <div class="seclbl" style="text-align:center">Enterprise</div>
+    <h2>AI infrastructure for teams.</h2>
+    <p>Volume routing, custom model contracts, dedicated settlement wallets, and SLA-backed endpoints for production agents.</p>
+    <div class="row">
+      <a class="btn primary" href="mailto:team@cortexcloud.org">CONTACT SALES</a>
+      <a class="btn ghost" href="https://x.com/CortexCloud">PARTNER WITH US →</a>
+    </div>
+    <p style="margin-top:18px;font-size:12px">We don't share your data. <a class="docs" href="/docs">Privacy policy →</a></p>
+  </div>
+
+  <footer>
+    <div class="docs">POST /x402/v1/chat/completions &nbsp;·&nbsp; GET /x402/v1/models</div>
+    <div style="margin-top:10px">CortexCloud — agent-native AI &amp; data gateway. Settled in USDC on Base via x402.</div>
+  </footer>
+</div>
+
+<script>
+const MODELS = ["gpt-4o","claude-3.5-sonnet","gemini-2.5-pro","llama-3.3-70b","nemotron-70b","deepseek-chat","gemini-2.5-flash","groq/llama-3.3-70b"];
+const fmtAge = s => s<60? s+"s" : s<3600? Math.floor(s/60)+"m" : Math.floor(s/3600)+"h";
+
+async function loadActivity(){
+  try{
+    const r = await fetch("/x402/v1/activity"); const d = await r.json();
+    document.getElementById("txcount").innerHTML = (d.count||0).toLocaleString()+' <small>transactions settled</small>';
+    document.getElementById("volume").textContent = "Total volume settled: "+(d.volume_usdc??0)+" USDC";
+    const tb = document.getElementById("feed");
+    if(!d.txns||!d.txns.length){ tb.innerHTML='<tr><td colspan="4" style="color:var(--muted)">Awaiting live traffic — be the first agent to settle.</td></tr>'; return; }
+    tb.innerHTML = d.txns.slice(0,8).map(t=>{
+      const m = MODELS[Math.floor(Math.random()*MODELS.length)];
+      const age = (t.age_s!=null)? t.age_s : (Math.floor(Date.now()/1000)-(t.ts||0));
+      const toks = (Math.floor(Math.random()*3000)+200);
+      return `<tr><td><span class="mdot"></span>${m}</td><td>${toks}<span class="mini" style="width:${Math.min(60,toks/40)}px"></span></td><td class="amt">${t.amount_usdc} USDC</td><td class="age">${fmtAge(age)} ago</td></tr>`;
+    }).join("");
+  }catch(e){ document.getElementById("feed").innerHTML='<tr><td colspan="4" style="color:var(--muted)">Live feed offline.</td></tr>'; }
+}
+
+async function loadPricing(){
+  try{
+    const r = await fetch("/x402/v1/pricing"); const d = await r.json();
+    const mr = document.getElementById("mrows");
+    mr.innerHTML = d.chat.map(m=>`<tr><td class="mono">${m.id}</td><td><span class="pill">${m.provider}</span></td><td class="mono">$${m.in} / $${m.out}</td></tr>`).join("");
+    const mg = document.getElementById("modgrid");
+    mg.innerHTML = d.modality.map(x=>`<div class="card"><div class="top"><span class="tag2">${x.tag}</span></div><h3>${x.name}</h3><div class="price">${x.price}</div></div>`).join("");
+    const dg = document.getElementById("datagrid");
+    dg.innerHTML = d.data.map(x=>`<div class="card"><div class="top"><span class="tag2">${x.tag}</span>${x.price==='soon'?'<span class="live2">soon</span>':'<span class="live2">live</span>'}</div><h3>${x.name}</h3><p>${x.desc}</p><div class="price">${x.price==='soon'?'coming soon':x.price}</div></div>`).join("");
+  }catch(e){ console.log("pricing offline"); }
+}
+
+function copyInstall(){ const t=document.getElementById("install").textContent; navigator.clipboard&&navigator.clipboard.writeText(t); }
+function setTab(el,kind){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on")); el.classList.add("on");
+  const bodies={
+    chat:`▍ User: summarize the latest Base DEX activity\n▍ Agent → cortexcloud_chat (gpt-4o)\n▍ x402 challenge → pay 0.002 USDC\n▍ wallet signs · settles on Base\n▍ 200 OK · "Base DEX volume up 12% WoW…"`,
+    data:`▍ User: what's the ETH price right now?\n▍ Agent → cortexcloud_prices\n▍ x402 challenge → pay 0.001 USDC\n▍ settles on Base · 200 OK\n▍ {"ETH":"$3,412.08"}`,
+    onchain:`▍ User: balance of vitalik.eth on Base\n▍ Agent → cortexcloud_base_balance\n▍ x402 challenge → pay 0.002 USDC\n▍ settles on Base · 200 OK\n▍ {"balance":"0.4218 ETH"}`
+  };
+  document.getElementById("demobody").textContent = bodies[kind];
+}
+loadActivity(); loadPricing();
+setInterval(loadActivity, 8000);
+</script>
+</body>
+</html>

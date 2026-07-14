@@ -16,6 +16,17 @@ ROUTE_PRICING: dict[str, str] = {
     
     # Models (Free)
     "GET /x402/v1/models": "$0.00",
+
+    # Data marketplace (Phase B) — keyless upstreams
+
+    # On-chain Base data (Phase B extension) — public RPC, keyless
+    "GET /x402/v1/data/base/balance": "$0.001",
+    "GET /x402/v1/data/base/token-balance": "$0.001",
+    "GET /x402/v1/data/base/nonce": "$0.001",
+    "GET /x402/v1/data/prices": "$0.001",
+    "GET /x402/v1/data/coins/search": "$0.001",
+    "GET /x402/v1/data/dex/search": "$0.001",
+    "GET /x402/v1/data/dex/pairs": "$0.001",
 }
 
 # Route descriptions for x402 challenge

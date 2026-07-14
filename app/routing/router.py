@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.registry import ModelRegistry
 from app.providers import (
+    NvidiaProvider,
     BaseProvider,
     ProviderContext,
     OpenAIProvider,
@@ -38,6 +39,7 @@ class ModelRouter:
         "anthropic": AnthropicProvider,
         "gemini": GeminiProvider,
         "groq": GroqProvider,
+        "nvidia": NvidiaProvider,
     }
 
     def __init__(self, db: AsyncSession):
@@ -50,6 +52,7 @@ class ModelRouter:
             "anthropic": settings.ANTHROPIC_API_KEY,
             "gemini": settings.GEMINI_API_KEY,
             "groq": settings.GROQ_API_KEY,
+            "nvidia": settings.NVIDIA_API_KEY,
         }
         
         api_key = key_map.get(provider.lower())

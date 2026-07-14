@@ -60,13 +60,18 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
     GROQ_API_KEY: Optional[str] = Field(default=None, env="GROQ_API_KEY")
     XAI_API_KEY: Optional[str] = Field(default=None, env="XAI_API_KEY")
+    NVIDIA_API_KEY: Optional[str] = Field(default=None, env="NVIDIA_API_KEY")
     OPENROUTER_API_KEY: Optional[str] = Field(default=None, env="OPENROUTER_API_KEY")
 
     # x402 Payment Configuration
     X402_ENABLED: bool = Field(default=True, env="X402_ENABLED")
     WALLET_ADDRESS: Optional[str] = Field(default=None, env="WALLET_ADDRESS")
     X402_FACILITATOR_URL: str = Field(default="https://api.cdp.coinbase.com/platform/v2/x402", env="X402_FACILITATOR_URL")
-    X402_NETWORK: str = Field(default="base", env="X402_NETWORK")
+    X402_FACILITATOR_API_KEY: Optional[str] = Field(default=None, env="X402_FACILITATOR_API_KEY")
+    X402_FACILITATOR_API_KEY_ID: Optional[str] = Field(default=None, env="X402_FACILITATOR_API_KEY_ID")
+    X402_FACILITATOR_API_KEY_SECRET: Optional[str] = Field(default=None, env="X402_FACILITATOR_API_KEY_SECRET")
+    X402_NETWORK: str = Field(default="eip155:8453", env="X402_NETWORK")
+    X402_RESOURCE_BASE: str = Field(default="https://cortexcloud.org", env="X402_RESOURCE_BASE")
 
     @model_validator(mode="after")
     def assemble_db_connection(self) -> "Settings":

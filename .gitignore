@@ -24,3 +24,7 @@ Thumbs.db
 
 # Agent/workspace configuration
 .agent/
+
+# one-off deploy/mutation helpers (not shipped)
+patch_*.py
+agefix.py

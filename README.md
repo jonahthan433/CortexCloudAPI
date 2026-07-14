@@ -1,170 +1,191 @@
 # CortexCloud API Gateway
 
-CortexCloud API is a production-ready, enterprise-grade, high-performance AI gateway designed to unify multiple AI providers (OpenAI, Anthropic, Gemini, Groq) under a single OpenAI-compatible API surface. 
+> Agent-native, OpenAI-compatible AI gateway with **x402 crypto payments** (USDC on Base). Pay per call — no API key, no subscription.
 
-It provides secure authentication, Redis-backed sliding window rate limiters, precision billing ledger accounting, automatic fallback routing, and real-time observability.
-
----
-
-## Architecture Diagram
-
-The diagram below shows the end-to-end request lifecycle through the CortexCloud gateway:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Client as Developer / Client
-    participant GW as FastAPI Gateway
-    participant Redis as Redis Cache
-    participant DB as Postgres Database
-    participant Upstream as Upstream AI Provider<br/>(OpenAI/Claude/Gemini/Groq)
-
-    Client->>GW: POST /v1/chat/completions (Bearer Key)
-    activate GW
-    
-    GW->>DB: Query API Key & Billing Balance (Locked FOR UPDATE)
-    activate DB
-    DB-->>GW: Return key details & Balance ($10.00)
-    deactivate DB
-
-    alt Balance <= 0
-        GW-->>Client: 402 Payment Required (Exhausted Balance)
-    else Balance > 0
-        GW->>Redis: Check Rate Limits (Minute/Daily/Monthly)
-        activate Redis
-        Redis-->>GW: OK (Not Rate Limited)
-        deactivate Redis
-
-        GW->>DB: Resolve model specs & fallback chains
-        activate DB
-        DB-->>GW: Active Model specs (e.g., gpt-4o -> claude-3-5)
-        deactivate DB
-
-        GW->>Upstream: Execute completions request with retries
-        activate Upstream
-        alt Primary Fails (HTTP 429/5xx)
-            Upstream-->>GW: Error response
-            Note over GW: Log warning & trigger retry or fallback to Claude 3.5
-            GW->>Upstream: Execute completion on fallback model
-            Upstream-->>GW: Success Response
-        else Success
-            Upstream-->>GW: Success Response
-        end
-        deactivate Upstream
-
-        GW->>GW: Calculate prompt/completion tokens (tiktoken) & costs
-        GW->>DB: Deduct costs, Log usage transaction (UsageLog)
-        activate DB
-        DB-->>GW: Commited
-        deactivate DB
-
-        GW-->>Client: Return OpenAI-compatible response JSON / Stream
-    end
-    deactivate GW
-```
+CortexCloud is a production-grade AI inference + data gateway. It unifies multiple AI
+providers (OpenAI, Anthropic, Gemini, Groq, NVIDIA) behind a single OpenAI-compatible API
+surface, and exposes a growing set of **x402 payment-gated endpoints** so agents can pay
+per-call in USDC on Base mainnet — no account, no credit card, no API key required.
 
 ---
 
 ## Features
 
-*   **100% OpenAI Compatibility**: Drop-in replacement for OpenAI endpoints (`/v1/chat/completions` and `/v1/embeddings`).
-*   **Unified AI Provider Support**: Native integration with **OpenAI**, **Anthropic**, **Gemini**, and **Groq** APIs.
-*   **Automatic Failover & Retries**: Configurable fallback routes and retry policies (exponential backoff) to keep applications up during provider outages.
-*   **Ledger Billing & Credit Control**: High-precision balance checks (`with_for_update` row locks) preventing credit exploitation with instant `402 Payment Required` errors.
-*   **Redis-Backed Sliding Window Rate Limiting**: Limiters covering minute (RPM), daily, and monthly request volumes with graceful database fallbacks.
-*   **Tokenizer Pre-Warming**: Pre-cached vocabularies in memory at server boot to avoid synchronous blocking I/O.
-*   **Observability & Health Checks**: Structured JSON logs and rollups showing provider error rates in real-time.
+- **OpenAI-compatible gateway** — `/v1/chat/completions`, `/v1/models`, embeddings, and more.
+- **Multi-provider routing** — OpenAI, Anthropic, Gemini, Groq, NVIDIA with automatic
+  fallback chains and cost/latency-aware model resolution.
+- **x402 payment rails** — payment-gated AI + data endpoints. Agents pay in USDC on Base
+  via the `402 Payment Required` → sign → settle handshake (CDP v2 / EIP-712).
+- **On-chain & market data marketplace** — keyless Base data routes (token prices, DEX
+  pools, wallet balances) and structured on-chain tools, all payable per call.
+- **Activity & pricing feeds** — public `/x402/v1/activity` (live settlement feed) and
+  `/x402/v1/pricing` (per-model + per-tool USDC pricing) for discovery and dashboards.
+- **Bazaar / x402scan discovery** — self-describing OpenAPI + resource registry so agents
+  and explorers (x402scan, AgentCash) can enumerate payable endpoints and verify ownership.
+- **Enterprise controls** — API-key auth (HMAC-SHA256), RBAC orgs, Redis-backed sliding
+  window rate limiting, precision billing ledger, audit logging, correlation-ID tracing.
+- **Observability** — structured logging, health checks, retries with fallback, and a
+  Dockerized, Alembic-migrated deployment.
 
 ---
 
-## Quick Start & Installation
+## Architecture
 
-### Prerequisites
-*   Python 3.12+
-*   PostgreSQL and Redis (or Docker/Podman)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Agent as Agent / Client
+    participant GW as FastAPI Gateway
+    participant Redis as Redis
+    participant DB as Postgres
+    participant Prov as Upstream Provider
+    participant Chain as Base (USDC)
 
-### 1. Clone & Setup Virtual Environment
+    Agent->>GW: POST /x402/v1/chat/completions
+    alt x402-gated route
+        GW-->>Agent: 402 Payment Required (price + payTo)
+        Agent->>Chain: Sign & settle USDC (EIP-712)
+        Agent->>GW: Retry with X-Payment header
+    end
+    GW->>DB: Resolve model + billing
+    GW->>Redis: Rate-limit check
+    GW->>Prov: Forward completion (streaming + tool calls)
+    Prov-->>GW: Tokens
+    GW-->>Agent: Streamed response
+```
+
+---
+
+## Repository Layout
+
+```
+app/
+  main.py                 # FastAPI app, router mounting, static landing page
+  core/                   # config, logging, redis, security
+  auth/                   # API-key (HMAC) + dependency injection
+  billing/                # Plugin-based billing ledger (base + mock)
+  providers/              # openai, anthropic, gemini, groq, nvidia (translation)
+  routing/router.py       # model resolution + fallback chains
+  middleware/             # rate_limit, trace, x402 payment, x402_rate_limit
+  models/                 # registry, usage, key, org, user, billing (SQLAlchemy)
+  services/               # model + usage services
+  api/v1/                 # /v1 chat completions + models
+  x402/                   # payment routes, data marketplace, on-chain tools,
+                          #   bazaar discovery, status, pricing
+  activity.py             # live settlement activity feed
+  pricing.py              # per-model / per-tool USDC pricing table
+static/                   # branded landing page (index.html, favicon)
+tests/                    # pytest integration suite
+docs/x402-testing-guide.md
+```
+
+---
+
+## Quickstart
+
+### 1. Install
 ```bash
-git clone git@github.com:jonahthan433/CortexCloudAPI.git
-cd CortexCloudAPI
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env` and fill in your variables:
+### 2. Configure
 ```bash
-cp .env.example .env
+cp .env.example .env   # fill in provider keys + WALLET_ADDRESS
 ```
 
-### 3. Spin up Databases
-To start local database instances using Docker Compose:
+### 3. Databases
 ```bash
 docker-compose up -d
-```
-
-### 4. Run Database Migrations
-Apply Alembic migrations to build the tables and create schema indexes:
-```bash
 alembic upgrade head
-```
-
-### 5. Seed Developer Workspace
-Seed default models, developer admin accounts, and trial balances:
-```bash
 python -m app.scratch.seed_dev
 ```
 
-### 6. Start the API Gateway
+### 4. Run
 ```bash
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Docs: http://localhost:8000/docs
 ```
-Swagger API documentation will be available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
 ---
 
 ## API Examples
 
-### Chat Completions
-Route chat completion requests through CortexCloud by substituting the Bearer key and API endpoint:
+### Standard (API key)
+```bash
+curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Authorization: Bearer cx-liv...7890" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"Explain quantum computing."}]}'
+```
+
+### x402 (pay per call, no key)
+Agents send the request, receive a `402` with the price, settle USDC on Base, and retry
+with the `X-Payment` header. The easiest path is a client that does this automatically:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/v1/chat/completions \
-  -H "Authorization: Bearer cx-live-devkey1234567890" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "gpt-4o",
-    "messages": [
-      {"role": "user", "content": "Explain quantum computing in one sentence."}
-    ]
-  }'
+# Local OpenAI-compatible proxy that auto-pays x402 (our ClawRouter equivalent)
+npx -y @cortexcloud.org/proxy
+# then point any OpenAI SDK at http://localhost:8402/v1
 ```
+
+Public, keyless discovery endpoints:
+- `GET  /x402/v1/models`     — payable model list
+- `GET  /x402/v1/pricing`    — USDC pricing per model/tool
+- `GET  /x402/v1/activity`   — live settlement feed
+- `POST /x402/v1/chat/completions` — pay-per-call inference
+- `POST /x402/v1/data/*`     — payable Base market/data tools
+
+---
+
+## SDKs & Clients
+
+| Package | Purpose |
+|---------|---------|
+| `@cortexcloud.org/mcp`   | MCP server (Claude Code / MCP agents) — paid x402 tools |
+| `@cortexcloud.org/proxy` | Local OpenAI-compatible proxy that auto-pays x402 per call |
 
 ---
 
 ## Testing
-
-To run the automated integration test suite:
 ```bash
 pytest tests/test_gateway.py -p no:warnings
 ```
 
+See `docs/x402-testing-guide.md` for the x402 payment-flow test plan.
+
 ---
 
 ## Deployment
-
-CortexCloud API can be deployed to production in a containerized environment. Build the production Docker image using:
-
 ```bash
 docker build -t cortexcloud-api:latest .
+docker-compose up -d
 ```
+The branded landing page is served at `/` and the x402 discovery surface at `/x402/v1/*`.
 
 ---
 
-## Project Roadmap
+## Security
 
-- [ ] **Redis Model Registry Caching**: Add TTL-based memory caching for active model routes to reduce database reads.
-- [ ] **Strict User Password Complexity**: Integrate complexity scoring checks on registrations.
-- [ ] **Custom Timeout Settings per Model**: Let developers define custom timeout capabilities inside the registry.
-- [ ] **Advanced Usage Analytics Dashboard**: Build a React/Next.js frontend UI for charts, logs, and token tracking.
+- Secrets live only in `.env` (gitignored). Never commit keys.
+- x402 payments use EIP-712 typed-data signatures settled on Base mainnet.
+- API keys are HMAC-SHA256 authenticated; rate limits are Redis-backed with DB fallback.
+
+See [SECURITY.md](SECURITY.md).
+
+---
+
+## Roadmap
+
+- [ ] Redis model-registry caching (TTL) to cut DB reads
+- [ ] Multi-chain settlement (Solana CAIP-22, Polygon/Arbitrum/Optimism via Circle Gateway)
+- [ ] Response caching + `/metrics` (Prometheus)
+- [ ] Image generation + speech (TTS/STT) endpoints
+- [ ] Python + TypeScript SDKs with built-in x402 clients
+- [ ] Expanded test coverage (providers, routing, billing)
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
